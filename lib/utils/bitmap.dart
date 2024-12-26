@@ -56,10 +56,12 @@ Future<Uint8List> generateNavigationBMP(String maneuver, double distance) async 
   // Build the BMP headers and combine
   final bmpBytes = _build1BitBmp(canvasWidth, canvasHeight, bmpData);
 
-  // Save BMP temporarily to disk for debugging
-  await _saveBitmapToDisk(bmpBytes, 'navigation.bmp');
+  Uint8List invertedBitmap = Uint8List(bmpBytes.length);
+  for (int i = 0; i < bmpBytes.length; i++) {
+    invertedBitmap[i] = 255 - bmpBytes[i];
+  }
 
-  return bmpBytes;
+  return invertedBitmap;
 }
 
 // Load and decode image
@@ -77,19 +79,6 @@ Future<Uint8List?> _loadManeuverIcon(String maneuver) async {
   } catch (e) {
     print("Error loading icon: $e");
     return null;
-  }
-}
-
-/// Save bitmap to disk for debugging purposes
-Future<void> _saveBitmapToDisk(Uint8List bmpData, String fileName) async {
-  try {
-    final tempDir = await getTemporaryDirectory();
-    final filePath = '${tempDir.path}/$fileName';
-    final file = File(filePath);
-    await file.writeAsBytes(bmpData);
-    print('Bitmap saved temporarily at $filePath');
-  } catch (e) {
-    print('Error saving bitmap to disk: $e');
   }
 }
 

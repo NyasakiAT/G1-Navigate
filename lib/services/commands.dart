@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:navigate/utils/utils.dart';
-//import 'package:even_glasses/models/notification.dart';
-
+import '../utils/logging.dart';
 import '../services/bluetooth_manager.dart';
+
+bool _isTransmitting = false;
 
 enum Command {
   START_AI(0xF5),
@@ -160,7 +161,7 @@ Future<List<int>?> sendBmpPacket({
   if (seq == 0) {
     // Insert the 4 required bytes
     bmpCommand.insertAll(2, [0x00, 0x1c, 0x00, 0x00]);
-    print(bmpCommand);
+    // print(bmpCommand);
   }
 
   try {
@@ -262,76 +263,96 @@ Future<String?> sendTextPacket({
   int delay = 400,
   int seq = 0,
 }) async {
-  List<int> textBytes = utf8.encode(textMessage);
-
-  SendResultPacket result = SendResultPacket(
-    command: Command.SEND_RESULT,
-    seq: seq,
-    totalPackages: 1,
-    currentPackage: 0,
-    screenStatus: screenStatus,
-    newCharPos0: 0,
-    newCharPos1: 0,
-    pageNumber: pageNumber,
-    maxPages: maxPages,
-    data: textBytes,
-  );
-
-  List<int> aiResultCommand = result.build();
+  if (_isTransmitting) {
+    logger.e('Already transmitting');
+    return null;
+  }
 
   try {
-    if (bluetoothManager.leftGlass != null &&
-        bluetoothManager.rightGlass != null) {
-      // Send to the left glass and wait
-      await bluetoothManager.leftGlass!.sendData(aiResultCommand);
-      await Future.delayed(Duration(milliseconds: delay));
+    _isTransmitting = true;
+    List<int> textBytes = utf8.encode(textMessage);
 
-      // Send to the right glass and wait
-      await bluetoothManager.rightGlass!.sendData(aiResultCommand);
-      await Future.delayed(Duration(milliseconds: delay));
+    SendResultPacket result = SendResultPacket(
+      command: Command.SEND_RESULT,
+      seq: seq,
+      totalPackages: 1,
+      currentPackage: 0,
+      screenStatus: screenStatus,
+      newCharPos0: 0,
+      newCharPos1: 0,
+      pageNumber: pageNumber,
+      maxPages: maxPages,
+      data: textBytes,
+    );
 
-      return textMessage;
-    } else {
-      print("Could not connect to glasses devices.");
+    List<int> aiResultCommand = result.build();
+
+    try {
+      if (bluetoothManager.leftGlass != null &&
+          bluetoothManager.rightGlass != null) {
+        // Send to the left glass and wait
+        await bluetoothManager.leftGlass!.sendData(aiResultCommand);
+        await Future.delayed(Duration(milliseconds: delay));
+
+        // Send to the right glass and wait
+        await bluetoothManager.rightGlass!.sendData(aiResultCommand);
+        await Future.delayed(Duration(milliseconds: delay));
+
+        return textMessage;
+      } else {
+        print("Could not connect to glasses devices.");
+        return null;
+      }
+    } catch (e) {
+      print('Error in sendTextPacket: $e');
       return null;
     }
-  } catch (e) {
-    print('Error in sendTextPacket: $e');
-    return null;
+  } finally {
+    _isTransmitting = false;
   }
 }
 
 Future<Uint8List?> sendBitmap(
     Uint8List bitmap, BluetoothManager bluetoothManager) async {
-  List<Uint8List> textBytes = Utils.divideUint8List(bitmap, 194);
-
-  List<List<int>?> sentPackets = [];
-
-  print("Transmitting BMP");
-  for (int i = 0; i < textBytes.length; i++) {
-    sentPackets.add(await sendBmpPacket(
-        dataChunk: textBytes[i], bluetoothManager: bluetoothManager, seq: i));
-    await Future.delayed(Duration(milliseconds: 100));
+  if (_isTransmitting) {
+    logger.e('Already transmitting');
+    return null;
   }
+  try {
+    _isTransmitting = true;
 
-  print("Send end packet");
-  await sendPacketEndPacket(bluetoothManager: bluetoothManager);
-  await Future.delayed(Duration(milliseconds: 500));
+    List<Uint8List> textBytes = Utils.divideUint8List(bitmap, 194);
 
-  List<int> concatenatedList = [];
-  for (var packet in sentPackets) {
-    if (packet != null) {
-      concatenatedList.addAll(packet);
+    List<List<int>?> sentPackets = [];
+
+    print("Transmitting BMP");
+    for (int i = 0; i < textBytes.length; i++) {
+      sentPackets.add(await sendBmpPacket(
+          dataChunk: textBytes[i], bluetoothManager: bluetoothManager, seq: i));
+      await Future.delayed(Duration(milliseconds: 100));
     }
+
+    print("Send end packet");
+    await sendPacketEndPacket(bluetoothManager: bluetoothManager);
+    await Future.delayed(Duration(milliseconds: 500));
+
+    List<int> concatenatedList = [];
+    for (var packet in sentPackets) {
+      if (packet != null) {
+        concatenatedList.addAll(packet);
+      }
+    }
+    Uint8List concatenatedPackets = Uint8List.fromList(concatenatedList);
+
+    print("Sending CRC for mitmap");
+    // Send CRC
+    await sendCRCPacket(
+        packets: concatenatedPackets, bluetoothManager: bluetoothManager);
+
+    return concatenatedPackets;
+  } finally {
+    _isTransmitting = false;
   }
-  Uint8List concatenatedPackets = Uint8List.fromList(concatenatedList);
-
-  print("Sending CRC for mitmap");
-  // Send CRC
-  await sendCRCPacket(
-      packets: concatenatedPackets, bluetoothManager: bluetoothManager);
-
-  return concatenatedPackets;
 }
 
 Future<String?> sendText(String textMessage, BluetoothManager bluetoothManager,

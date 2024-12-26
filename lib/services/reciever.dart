@@ -13,7 +13,7 @@ class VoiceDataCollector {
     _chunks[seq] = data;
   }
 
-  bool get isComplete => _chunks.length > 0 && !_chunks.containsKey(_expectedSeq);
+  bool get isComplete => _chunks.isNotEmpty && !_chunks.containsKey(_expectedSeq);
   
   List<int> getAllData() {
     List<int> complete = [];
