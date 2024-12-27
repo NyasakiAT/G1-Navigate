@@ -6,8 +6,15 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
 Future<Uint8List> generateNavigationBMP(String maneuver, double distance) async {
+
+  final iconSize = 50.0;
+  final fontSize = 24.0;
+
   const canvasWidth = 576;
   const canvasHeight = 136;
+
+  final offsetTop = 0.0;
+  final offsetLeft = 0.0;
 
   final recorder = ui.PictureRecorder();
   final canvas = ui.Canvas(recorder);
@@ -22,12 +29,15 @@ Future<Uint8List> generateNavigationBMP(String maneuver, double distance) async 
   final iconData = await _loadManeuverIcon(maneuver);
   if (iconData != null) {
     final ui.Image image = await decodeImage(iconData);
-    final iconSize = 50.0;
-    final iconRect = ui.Rect.fromCenter(
+
+    /*final iconRect = ui.Rect.fromCenter(
       center: ui.Offset(canvasWidth / 2, canvasHeight / 3),
       width: iconSize,
       height: iconSize,
-    );
+    );*/
+
+    final iconRect = ui.Rect.fromLTWH(offsetLeft, offsetTop+iconSize/2, iconSize, iconSize);
+
     canvas.drawImageRect(
       image,
       ui.Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
@@ -37,14 +47,14 @@ Future<Uint8List> generateNavigationBMP(String maneuver, double distance) async 
   }
 
   // Draw distance text in white
-  final textStyle = ui.TextStyle(color: ui.Color(0xFFFFFFFF), fontSize: 24);
-  final paragraphStyle = ui.ParagraphStyle(textAlign: ui.TextAlign.center);
+  final textStyle = ui.TextStyle(color: ui.Color(0xFFFFFFFF), fontSize: fontSize);
+  final paragraphStyle = ui.ParagraphStyle(textAlign: ui.TextAlign.left);
   final paragraphBuilder = ui.ParagraphBuilder(paragraphStyle)
     ..pushStyle(textStyle)
-    ..addText("${distance.toStringAsFixed(1)} m");
+    ..addText("${distance.toStringAsFixed(0)} m");
   final paragraph = paragraphBuilder.build()
     ..layout(ui.ParagraphConstraints(width: canvasWidth.toDouble()));
-  canvas.drawParagraph(paragraph, ui.Offset(0, canvasHeight * 0.7));
+  canvas.drawParagraph(paragraph, ui.Offset(0 + offsetLeft, iconSize + fontSize + offsetTop));
 
   // Convert to an image
   final picture = recorder.endRecording();

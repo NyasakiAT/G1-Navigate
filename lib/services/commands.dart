@@ -344,7 +344,7 @@ Future<Uint8List?> sendBitmap(
     }
     Uint8List concatenatedPackets = Uint8List.fromList(concatenatedList);
 
-    print("Sending CRC for mitmap");
+    print("Sending CRC for bitmap");
     // Send CRC
     await sendCRCPacket(
         packets: concatenatedPackets, bluetoothManager: bluetoothManager);
