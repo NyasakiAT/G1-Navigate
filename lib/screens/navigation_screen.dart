@@ -62,9 +62,7 @@ class _NavigationPageState extends State<NavigationPage> {
 
   void _startSendingCurrentStepToGlasses() {
     _timer = Timer.periodic(Duration(seconds: 10), (timer) {
-
-        _sendCurrentStepToGlasses();
-
+      _sendCurrentStepToGlasses();
     });
   }
 
@@ -187,31 +185,27 @@ class _NavigationPageState extends State<NavigationPage> {
 
   Future<void> _sendCurrentStepToGlasses() async {
     if (_glassesConnected) {
+      if (_currentStepIndex < widget.steps.length) {
+        final currentStep = widget.steps[_currentStepIndex];
 
-        if (_currentStepIndex < widget.steps.length) {
-          final currentStep = widget.steps[_currentStepIndex];
-
-          // Distance parsing from step distance string (e.g., "200 m" or "1.2 km")
-          double distanceValue = 0.0;
-          final distanceStr = currentStep.distance.toLowerCase();
-          if (distanceStr.contains("km")) {
-            // Convert km to m
-            final kmValue =
-                double.parse(distanceStr.replaceAll('km', '').trim());
-            distanceValue = kmValue * 1000;
-          } else if (distanceStr.contains("m")) {
-            distanceValue =
-                double.parse(distanceStr.replaceAll('m', '').trim());
-          }
-
-          final bmpData =
-              await generateNavigationBMP(currentStep.maneuver, distanceValue);
-
-          // Instead of sending immediately, set the BMP data so it will be sent once every second
-          _sendBitmap(bmpData);
+        // Distance parsing from step distance string (e.g., "200 m" or "1.2 km")
+        double distanceValue = 0.0;
+        final distanceStr = currentStep.distance.toLowerCase();
+        if (distanceStr.contains("km")) {
+          // Convert km to m
+          final kmValue = double.parse(distanceStr.replaceAll('km', '').trim());
+          distanceValue = kmValue * 1000;
+        } else if (distanceStr.contains("m")) {
+          distanceValue = double.parse(distanceStr.replaceAll('m', '').trim());
         }
 
-    }else{
+        final bmpData =
+            await generateNavigationBMP(currentStep.maneuver, distanceValue);
+
+        // Instead of sending immediately, set the BMP data so it will be sent once every second
+        _sendBitmap(bmpData);
+      }
+    } else {
       logger.e("Glasses are not connected. Cannot send step data.");
     }
   }
@@ -307,6 +301,10 @@ class _NavigationPageState extends State<NavigationPage> {
 
   @override
   void dispose() {
+    sendExitFeaturePacket(bluetoothManager: bluetoothManager);
+
+    
+
     bluetoothManager.leftGlass?.disconnect();
     bluetoothManager.rightGlass?.disconnect();
     _locationSubscription.cancel();

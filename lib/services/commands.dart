@@ -18,7 +18,8 @@ enum Command {
   DASHBOARD(0x22),
   NOTIFICATION(0x4B),
   BMP(0x15),
-  CRC(0x16);
+  CRC(0x16),
+  EXIT(0x18);
 
   final int value;
   const Command(this.value);
@@ -181,6 +182,29 @@ Future<List<int>?> sendBmpPacket({
   } catch (e) {
     print('Error in sendTextPacket: $e');
     return null;
+  }
+}
+
+Future<bool?> sendExitFeaturePacket({
+  required BluetoothManager bluetoothManager,
+}) async {
+  try {
+    if (bluetoothManager.leftGlass != null &&
+        bluetoothManager.rightGlass != null) {
+      // Send to the left glass and wait
+      await bluetoothManager.leftGlass!.sendData([Command.EXIT.value]);
+
+      // Send to the right glass and wait
+      await bluetoothManager.rightGlass!.sendData([Command.EXIT.value]);
+
+      return true;
+    } else {
+      print("Could not connect to glasses devices.");
+      return null;
+    }
+  } catch (e) {
+    print('Error in sendTextPacket: $e');
+    return false;
   }
 }
 
