@@ -329,12 +329,12 @@ Future<Uint8List?> sendBitmap(
     for (int i = 0; i < textBytes.length; i++) {
       sentPackets.add(await sendBmpPacket(
           dataChunk: textBytes[i], bluetoothManager: bluetoothManager, seq: i));
-      await Future.delayed(Duration(milliseconds: 100));
+      //await Future.delayed(Duration(milliseconds: 100));
     }
 
     print("Send end packet");
     await sendPacketEndPacket(bluetoothManager: bluetoothManager);
-    await Future.delayed(Duration(milliseconds: 500));
+    //await Future.delayed(Duration(milliseconds: 500));
 
     List<int> concatenatedList = [];
     for (var packet in sentPackets) {

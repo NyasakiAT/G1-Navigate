@@ -13,8 +13,9 @@ class VoiceDataCollector {
     _chunks[seq] = data;
   }
 
-  bool get isComplete => _chunks.isNotEmpty && !_chunks.containsKey(_expectedSeq);
-  
+  bool get isComplete =>
+      _chunks.isNotEmpty && !_chunks.containsKey(_expectedSeq);
+
   List<int> getAllData() {
     List<int> complete = [];
     for (var i = 0; i < _chunks.length; i++) {
@@ -33,11 +34,17 @@ class VoiceDataCollector {
 
 final VoiceDataCollector voiceCollector = VoiceDataCollector();
 
+String listToHexString(List<int> list) {
+  return list
+      .map((int byte) => byte.toRadixString(16).padLeft(2, '0'))
+      .join(" ");
+}
+
 Future<void> receiveHandler(String side, List<int> data) async {
   if (data.isEmpty) return;
 
   int command = data[0];
-  
+
   switch (command) {
     case 0xF5: // Start Even AI
       if (data.length >= 2) {
@@ -45,7 +52,7 @@ Future<void> receiveHandler(String side, List<int> data) async {
         handleEvenAICommand(side, subcmd);
       }
       break;
-      
+
     case 0x0E: // Mic Response
       if (data.length >= 3) {
         int status = data[1];
@@ -53,7 +60,7 @@ Future<void> receiveHandler(String side, List<int> data) async {
         handleMicResponse(side, status, enable);
       }
       break;
-      
+
     case 0xF1: // Voice Data
       if (data.length >= 2) {
         int seq = data[1];
@@ -61,9 +68,10 @@ Future<void> receiveHandler(String side, List<int> data) async {
         handleVoiceData(side, seq, voiceData);
       }
       break;
-      
+
     default:
-      print('[$side] Unknown command: 0x${command.toRadixString(16)}');
+      print(
+          '[$side] Unknown command: 0x${command.toRadixString(16)}\n${listToHexString(data)}');
   }
 }
 
@@ -99,6 +107,7 @@ void handleMicResponse(String side, int status, int enable) {
 }
 
 void handleVoiceData(String side, int seq, List<int> voiceData) {
-  print('[$side] Received voice data chunk: seq=$seq, length=${voiceData.length}');
+  print(
+      '[$side] Received voice data chunk: seq=$seq, length=${voiceData.length}');
   voiceCollector.addChunk(seq, voiceData);
 }
