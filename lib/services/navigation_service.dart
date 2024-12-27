@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart' as maps;
 import 'package:geolocator/geolocator.dart';
 import '../services/directions_service.dart';
 import '../utils/route_step.dart';
+import '../utils/constants.dart';
 
 class NavigationService {
   final List<maps.LatLng> routePoints;
@@ -48,7 +49,7 @@ class NavigationService {
       nextStep.longitude,
     );
 
-    if (distanceToNextStep < 20) { // e.g., 20 meters
+    if (distanceToNextStep < NavigationConstants.DISTANCE_TO_NEXT_STEP) { // e.g., 20 meters
       _currentStepIndex++;
       if (_currentStepIndex < routeSteps.length) {
         onNextStep(routeSteps[_currentStepIndex]);
@@ -66,7 +67,7 @@ class NavigationService {
       nearestPoint.longitude,
     );
 
-    if (distanceToPolyline > 50) { // e.g., 50 meters
+    if (distanceToPolyline > NavigationConstants.DISTANCE_FOR_POSITION_UPDATE) { // e.g., 50 meters
       onRerouting();
 
       // Recalculate the route

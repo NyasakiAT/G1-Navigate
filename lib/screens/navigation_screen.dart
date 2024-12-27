@@ -14,6 +14,7 @@ import '../utils/map_style.dart';
 import '../utils/bitmap.dart'; // For generateNavigationBMP
 import '../services/bluetooth_manager.dart'; // Your BLE service with scanning and connecting
 import '../utils/logging.dart';
+import '../utils/constants.dart';
 
 class NavigationPage extends StatefulWidget {
   final List<RouteStep> steps;
@@ -37,6 +38,8 @@ class _NavigationPageState extends State<NavigationPage> {
   final BluetoothManager bluetoothManager = BluetoothManager();
   int _currentStepIndex = 0;
   maps.LatLng? _currentLocation;
+    Position? _currentPosition;
+  StreamSubscription<Position>? _positionStreamSubscription;
   double _currentHeading = 0.0;
   List<maps.LatLng> _routePoints = [];
   final bool _isRerouting = false;
@@ -228,9 +231,16 @@ class _NavigationPageState extends State<NavigationPage> {
     }
   }
 
-  void _startLocationTracking() {
-    _locationSubscription =
-        Geolocator.getPositionStream().listen((Position position) {
+    void _startLocationTracking() {
+    const LocationSettings locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10, // Minimum distance (in meters) a device must move to trigger an update
+      // You can also specify a time interval for updates
+      // timeInterval: 10000, // Time interval (in milliseconds) between location updates
+    );
+
+    _locationSubscription = Geolocator.getPositionStream(locationSettings: locationSettings)
+        .listen((Position position) {
       setState(() {
         _currentLocation = maps.LatLng(position.latitude, position.longitude);
       });
@@ -270,7 +280,7 @@ class _NavigationPageState extends State<NavigationPage> {
       );
 
       // If close to the next step and not at the last step, move to the next step
-      if (distanceToNextStep < 20 &&
+      if (distanceToNextStep < NavigationConstants.DISTANCE_TO_NEXT_STEP &&
           _currentStepIndex < widget.steps.length - 1) {
         setState(() {
           _currentStepIndex++;
@@ -302,8 +312,6 @@ class _NavigationPageState extends State<NavigationPage> {
   @override
   void dispose() {
     sendExitFeaturePacket(bluetoothManager: bluetoothManager);
-
-    
 
     bluetoothManager.leftGlass?.disconnect();
     bluetoothManager.rightGlass?.disconnect();
