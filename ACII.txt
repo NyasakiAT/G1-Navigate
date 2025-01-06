@@ -1,0 +1,74 @@
+fork-left
+^  
+\ /
+ Y 
+
+fork-right
+  ^
+\ /
+ Y 
+
+keep-left
+^ |
+| |
+| |
+
+keep-right
+| ^
+| |
+| |
+
+merge-left
+^  
+|\ 
+| |
+
+merge-right
+  ^
+ /|
+| |
+
+ramp-right
+| ^
+|/ 
+|  
+
+ramp-left
+^ |
+ \|
+  |
+
+sharp-left
+<--
+  |
+   
+
+sharp-right
+-->
+|  
+   
+
+slight-left
+^  
+ \ 
+  |
+
+slight-right
+  ^
+ / 
+|  
+
+straight
+ ^ 
+ | 
+ | 
+
+ turn-left
+   
+<--
+   
+
+turn-right
+   
+-->
+   

@@ -1,0 +1,27 @@
+Background:         #2A2A2A (42,42,42)
+Button Background:  #232323 (35,35,35)
+Button Highlited:   #333333 (51,51,51)
+Accent:             #E7E486 (231,228,134)
+Text Active:        #F4F4F4 (244,244,244)
+Text Inactive:      #A4A4A4 (164,164,164)
+
+Manuvers:
+ferry
+fork-left
+fork-right
+keep-left
+keep-right
+merge
+ramp-left
+ramp-right
+roundabout-left
+roundabout-right
+straight
+turn-left
+turn-right
+turn-sharp-left
+turn-sharp-right
+turn-slight-left
+turn-slight-right
+uturn-left
+uturn-right

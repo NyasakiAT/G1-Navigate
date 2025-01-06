@@ -11,7 +11,7 @@ import 'package:navigate/services/commands.dart';
 import '../utils/route_step.dart';
 import '../services/directions_service.dart';
 import '../utils/map_style.dart';
-import '../utils/bitmap.dart'; // For generateNavigationBMP
+import '../utils/text_instructions.dart'; // For generateNavigationBMP
 import '../services/bluetooth_manager.dart'; // Your BLE service with scanning and connecting
 import '../utils/logging.dart';
 import '../utils/constants.dart';
@@ -175,10 +175,10 @@ class _NavigationPageState extends State<NavigationPage> {
     }
   }
 
-  void _sendBitmap(Uint8List bitmapData) async {
+  void _sendText(String data) async {
     if (bluetoothManager.leftGlass != null &&
         bluetoothManager.rightGlass != null) {
-      await sendBitmap(bitmapData, bluetoothManager);
+      await sendText(data, bluetoothManager);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Glasses are not connected')),
@@ -202,11 +202,11 @@ class _NavigationPageState extends State<NavigationPage> {
           distanceValue = double.parse(distanceStr.replaceAll('m', '').trim());
         }
 
-        final bmpData =
-            await generateNavigationBMP(currentStep.maneuver, distanceValue);
+        final textData =
+            await generateNavigationText(currentStep.maneuver, distanceValue);
 
         // Instead of sending immediately, set the BMP data so it will be sent once every second
-        _sendBitmap(bmpData);
+        _sendText(textData);
       }
     } else {
       logger.e("Glasses are not connected. Cannot send step data.");
